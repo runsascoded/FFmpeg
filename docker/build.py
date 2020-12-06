@@ -4,6 +4,12 @@ from utz import *
 DOCKERHUB_TOKEN_ENV = 'DOCKERHUB_TOKEN'
 DOCKERHUB_USER_ENV = 'DOCKERHUB_USER'
 
+HTTPS_URL_REGEX = r'^https://github\.com/(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+SSH_URL_REGEX = r'git@github\.com:(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+
+RELEASE_TAG_REGEX = r'^[rn](?P<version>\d+\.\d+(?:\.\d+)?)$'
+
+
 def main(args=None):
     if lines('git','status','--short','--untracked-files','no'):
         raise RuntimeError('Found uncommitted changes; exiting')
@@ -12,8 +18,9 @@ def main(args=None):
     parser = ArgumentParser()
     parser.add_argument('-B','--no-branches',action='store_true',help="Don't tag image with branches pointing at current HEAD")
     parser.add_argument('-c','--copy',action='store_true',help='Copy src into built container (as opposed to cloning from GitHub')
-    parser.add_argument('-j','--parallelism',help='Build parallelism during `docker build`')
+    parser.add_argument('-j','--parallelism',default=4,type=int,help='Build parallelism during `docker build`')
     parser.add_argument('-l','--latest-only',action='store_true',help='Only create "latest" tag. By default, a tag for the python version is also created, as well as for the current Git commit (if there are no uncommitted changes)')
+    parser.add_argument('-L','--no-latest',action='store_true',help='Skip pushing "latest" tag')
     parser.add_argument('-P','--push',action='store_true',help='Push built images')
     parser.add_argument('-r','--release',help='FFmpeg release to build (downloads source release directly by version, instead of cloning repo')
     parser.add_argument('--ref',help='Git SHA, branch, or tag to checkout in FFmpeg clone when building Docker image')
@@ -28,6 +35,7 @@ def main(args=None):
     args = parser.parse_args(args)
     copy = args.copy
     latest_only = args.latest_only
+    no_latest = args.no_latest
     parallelism = args.parallelism
     push = args.push
     ref = args.ref
@@ -49,8 +57,6 @@ def main(args=None):
             else:
                 raise RuntimeError('No "origin" remote found; unsure which of %d candidates to choose: %s' % (len(remotes), str(remotes)))
         url = line('git','remote','get-url',remote)
-        HTTPS_URL_REGEX = r'^https://github\.com/(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
-        SSH_URL_REGEX = r'git@github\.com:(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
         if (m := match(HTTPS_URL_REGEX, url)) or (m := match(SSH_URL_REGEX, url)):
             repository = f'{m["org"]}/{m["repo"]}'.lower()
         else:
@@ -66,8 +72,6 @@ def main(args=None):
 
     ref = ref or 'HEAD'
     sha = line('git','log','-n','1','--format=%H', ref)
-
-    RELEASE_TAG_REGEX = r'^[rn](?P<version>\d+\.\d+\.\d+)$'
 
     tags = lines('git','tag','--points-at',ref)
     release_tags = [ m['version'] for t in tags if (m := match(RELEASE_TAG_REGEX, t)) ]
@@ -119,7 +123,7 @@ def main(args=None):
                 '--enable-libx265',
                 '--enable-nonfree',
             ])
-            make = f'PATH="$HOME/bin:$PATH" make -j ${parallelism}'
+            make = f'PATH="$HOME/bin:$PATH" make -j {parallelism}'
 
             src_cmds = []
 
@@ -159,7 +163,9 @@ def main(args=None):
             ENTRYPOINT('["ffmpeg"]')
 
             file.build(repository)
-    _push(repository)
+
+    if not no_latest:
+        _push(repository)
 
     def tag(tg):
         url = f'{repository}:{tg}'
