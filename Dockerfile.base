@@ -1,0 +1,50 @@
+FROM debian:buster-slim
+
+WORKDIR /root/ffmpeg_sources
+
+# Compilation deps
+RUN apt-get update -qq && \
+    apt-get -y install \
+        autoconf \
+        automake \
+        build-essential \
+        cmake \
+        git-core \
+        libass-dev \
+        libfreetype6-dev \
+        libgnutls28-dev \
+        libsdl2-dev \
+        libtool \
+        libunistring-dev \
+        libva-dev \
+        libvdpau-dev \
+        libvorbis-dev \
+        libxcb1-dev \
+        libxcb-shm0-dev \
+        libxcb-xfixes0-dev \
+        pkg-config \
+        texinfo \
+        wget \
+        yasm \
+        zlib1g-dev
+
+# Codec deps
+RUN apt-get install -y \
+        nasm \
+        libx264-dev \
+        libx265-dev libnuma-dev \
+        libvpx-dev \
+        libmp3lame-dev \
+        libopus-dev
+RUN git clone --depth 1 https://github.com/mstorsjo/fdk-aac && \
+    cd fdk-aac && \
+    autoreconf -fiv && \
+    ./configure --prefix="$HOME/ffmpeg_build" --disable-shared && \
+    make && \
+    make install
+RUN git clone --depth 1 https://aomedia.googlesource.com/aom && \
+    mkdir -p aom_build && \
+    cd aom_build && \
+    PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_SHARED=off -DENABLE_NASM=on ../aom && \
+    PATH="$HOME/bin:$PATH" make && \
+    make install
