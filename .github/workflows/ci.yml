@@ -26,4 +26,4 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - name: "Docker: build, tag, and push"
         run: |
-          docker/build.sh --push -t ${{ secrets.DOCKERHUB_TOKEN }} -u ${{ secrets.DOCKERHUB_USER }}
+          docker/build.sh --push -L -t ${{ secrets.DOCKERHUB_TOKEN }} -u ${{ secrets.DOCKERHUB_USER }}

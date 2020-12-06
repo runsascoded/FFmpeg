@@ -14,6 +14,7 @@ def main(args=None):
     parser.add_argument('-c','--copy',action='store_true',help='Copy src into built container (as opposed to cloning from GitHub')
     parser.add_argument('-j','--parallelism',default=4,type=int,help='Build parallelism during `docker build`')
     parser.add_argument('-l','--latest-only',action='store_true',help='Only create "latest" tag. By default, a tag for the python version is also created, as well as for the current Git commit (if there are no uncommitted changes)')
+    parser.add_argument('-L','--no-latest',action='store_true',help='Skip pushing "latest" tag')
     parser.add_argument('-P','--push',action='store_true',help='Push built images')
     parser.add_argument('-r','--release',help='FFmpeg release to build (downloads source release directly by version, instead of cloning repo')
     parser.add_argument('--ref',help='Git SHA, branch, or tag to checkout in FFmpeg clone when building Docker image')
@@ -28,6 +29,7 @@ def main(args=None):
     args = parser.parse_args(args)
     copy = args.copy
     latest_only = args.latest_only
+    no_latest = args.no_latest
     parallelism = args.parallelism
     push = args.push
     ref = args.ref
@@ -159,7 +161,9 @@ def main(args=None):
             ENTRYPOINT('["ffmpeg"]')
 
             file.build(repository)
-    _push(repository)
+
+    if not no_latest:
+        _push(repository)
 
     def tag(tg):
         url = f'{repository}:{tg}'
