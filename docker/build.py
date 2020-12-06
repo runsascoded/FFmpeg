@@ -12,7 +12,7 @@ def main(args=None):
     parser = ArgumentParser()
     parser.add_argument('-B','--no-branches',action='store_true',help="Don't tag image with branches pointing at current HEAD")
     parser.add_argument('-c','--copy',action='store_true',help='Copy src into built container (as opposed to cloning from GitHub')
-    parser.add_argument('-j','--parallelism',help='Build parallelism during `docker build`')
+    parser.add_argument('-j','--parallelism',default=4,type=int,help='Build parallelism during `docker build`')
     parser.add_argument('-l','--latest-only',action='store_true',help='Only create "latest" tag. By default, a tag for the python version is also created, as well as for the current Git commit (if there are no uncommitted changes)')
     parser.add_argument('-P','--push',action='store_true',help='Push built images')
     parser.add_argument('-r','--release',help='FFmpeg release to build (downloads source release directly by version, instead of cloning repo')
@@ -119,7 +119,7 @@ def main(args=None):
                 '--enable-libx265',
                 '--enable-nonfree',
             ])
-            make = f'PATH="$HOME/bin:$PATH" make -j ${parallelism}'
+            make = f'PATH="$HOME/bin:$PATH" make -j {parallelism}'
 
             src_cmds = []
 
