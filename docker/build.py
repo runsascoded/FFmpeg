@@ -4,6 +4,12 @@ from utz import *
 DOCKERHUB_TOKEN_ENV = 'DOCKERHUB_TOKEN'
 DOCKERHUB_USER_ENV = 'DOCKERHUB_USER'
 
+HTTPS_URL_REGEX = r'^https://github\.com/(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+SSH_URL_REGEX = r'git@github\.com:(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+
+RELEASE_TAG_REGEX = r'^[rn](?P<version>\d+\.\d+(?:\.\d+)?)$'
+
+
 def main(args=None):
     if lines('git','status','--short','--untracked-files','no'):
         raise RuntimeError('Found uncommitted changes; exiting')
@@ -51,8 +57,6 @@ def main(args=None):
             else:
                 raise RuntimeError('No "origin" remote found; unsure which of %d candidates to choose: %s' % (len(remotes), str(remotes)))
         url = line('git','remote','get-url',remote)
-        HTTPS_URL_REGEX = r'^https://github\.com/(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
-        SSH_URL_REGEX = r'git@github\.com:(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
         if (m := match(HTTPS_URL_REGEX, url)) or (m := match(SSH_URL_REGEX, url)):
             repository = f'{m["org"]}/{m["repo"]}'.lower()
         else:
@@ -68,8 +72,6 @@ def main(args=None):
 
     ref = ref or 'HEAD'
     sha = line('git','log','-n','1','--format=%H', ref)
-
-    RELEASE_TAG_REGEX = r'^[rn](?P<version>\d+\.\d+\.\d+)$'
 
     tags = lines('git','tag','--points-at',ref)
     release_tags = [ m['version'] for t in tags if (m := match(RELEASE_TAG_REGEX, t)) ]
