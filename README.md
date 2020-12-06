@@ -4,20 +4,20 @@
 This FFmpeg fork uses GitHub Actions to build [FFmpeg](https://ffmpeg.org) from source (both from published release `tar.bz2`s as well as arbitrary Git commits/branches) inside Docker images which are published to [the runsascoded/ffmpeg Docker Hub repository](https://hub.docker.com/repository/docker/runsascoded/ffmpeg). The latest release is [4.3.1](https://hub.docker.com/layers/runsascoded/ffmpeg/4.3.1/images/sha256-c4579336fdedf7c2eddd2e991b2233a32298cf478af3af34d4843bc3c211fc1a).
 
 ## Run `ffmpeg` without installing `ffmpeg`
-```
-$ docker run runsascoded/ffmpeg -version
-ffmpeg version 4.3.1 Copyright (c) 2000-2020 the FFmpeg developers
-…
+```bash
+docker run runsascoded/ffmpeg -version
+# ffmpeg version 4.3.1 Copyright (c) 2000-2020 the FFmpeg developers
+# …
 ```
 These Docker images give you access to specific `ffmpeg` releases, built in [GitHub Actions that you can audit](https://github.com/runsascoded/FFmpeg/runs/1505388217?check_suite_focus=true#step:8:15722).
 
 ## Passing arguments
-Any arguments you'd normally pass to `fmpeg` can be sent to `docker run runsascoded/ffmpeg` instead.
+Any arguments you'd normally pass to `ffmpeg` can be sent to `docker run runsascoded/ffmpeg` instead.
 
 However, input and output paths must additionally be mounted into the container. For example, if your inputs and outputs are in your current directory (`$PWD`), you can just mount it in (here to `/mnt`, and setting that as the working directory inside the container):
-```
+```bash
 # down-sample `./my_video.mp4` to 10Mbps
-$ docker run -v "$PWD:/mnt" -w /mnt runsascoded/ffmpeg -i my_video.mp4 -b:v 10M my_video_10M.mp4
+docker run -v "$PWD:/mnt" -w /mnt runsascoded/ffmpeg -i my_video.mp4 -b:v 10M my_video_10M.mp4
 ```
 This is analogous to the undockerized `ffmpeg` command:
 ```bash
@@ -31,7 +31,7 @@ ffmpeg() {
 }
 ```
 then pretend you're running a locally-installed `ffmpeg`, as above:
-```
+```bash
 ffmpeg -i my_video.mp4 -b:v 10M my_video_10M.mp4
 ```
 
