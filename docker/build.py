@@ -55,8 +55,11 @@ def main(args=None):
             repository = f'{m["org"]}/{m["repo"]}'.lower()
         else:
             raise RuntimeError(f'Unrecognized origin URL: {url}')
+
     token = args.token or env.get(args.token_env)
     username = args.username or env.get(args.username_env)
+    if push and not (token and username):
+        raise RuntimeError('-u/--username and -t/--token required in order to -p/--push (%s, %s)' % (username, token))
 
     if (copy or ref) and release:
         raise ValueError(f'-r/--release (building from a source release) is exclusive with --copy and/or --ref (copying/cloning source into image)')
@@ -78,8 +81,7 @@ def main(args=None):
 
     def _push(url):
         if push:
-            p = Popen(['docker','login','-u',username,'--password-stdin'], stdout=PIPE, stdin=PIPE)
-            p.communicate(token)
+            run('docker','login','-u',username,'-p',token)
             run('docker','push',url)
 
     if copy:
