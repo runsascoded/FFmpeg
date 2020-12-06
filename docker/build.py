@@ -67,8 +67,10 @@ def main(args=None):
     ref = ref or 'HEAD'
     sha = line('git','log','-n','1','--format=%H', ref)
 
+    RELEASE_TAG_REGEX = r'^[rn](?P<version>\d+\.\d+\.\d+)$'
+
     tags = lines('git','tag','--points-at',ref)
-    release_tags = [ m['version'] for t in tags if (m := match('^n(?P<version>\d+\.\d+\.\d+)$', t)) ]
+    release_tags = [ m['version'] for t in tags if (m := match(RELEASE_TAG_REGEX, t)) ]
     if len(release_tags) > 1:
         raise RuntimeError('Multiple release tags found at commit %s: %s' % (sha, str(release_tags)))
     if release_tags:
