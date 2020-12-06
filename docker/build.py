@@ -24,7 +24,7 @@ def main(args=None):
     parser.add_argument('--token-env',default=DOCKERHUB_TOKEN_ENV,help=f'Environment variable storing a Docker Hub token (default: {DOCKERHUB_TOKEN_ENV})')
     parser.add_argument('-u','--username',help='User to log in to Docker Hub as')
     parser.add_argument('--username-env',default=DOCKERHUB_USER_ENV,help=f'Environment variable storing a Docker Hub username (default: {DOCKERHUB_USER_ENV})')
-    parser.add_argument('--repository',default='runsascoded/ffmpeg',help='Docker repository for built image')
+    parser.add_argument('--repository',help='Docker repository for built image')
     args = parser.parse_args(args)
     copy = args.copy
     latest_only = args.latest_only
@@ -37,6 +37,24 @@ def main(args=None):
     tag_tags = not args.no_tags
     tag_branches = not args.no_branches
     repository = args.repository
+    if not repository:
+        remotes = lines('git','remote')
+        if len(remotes) == 1:
+            [remote] = remotes
+        elif not remotes:
+            raise RuntimeError('No "repository" or git remotes found')
+        else:
+            if 'origin' in remotes:
+                remote = 'origin'
+            else:
+                raise RuntimeError('No "origin" remote found; unsure which of %d candidates to choose: %s' % (len(remotes), str(remotes)))
+        url = line('git','remote','get-url',remote)
+        HTTPS_URL_REGEX = r'^https://github\.com/(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+        SSH_URL_REGEX = r'git@github\.com:(?P<org>[^/]+)/(?P<repo>.+?)(?:.git)?$'
+        if (m := match(HTTPS_URL_REGEX, url)) or (m := match(SSH_URL_REGEX, url)):
+            repository = f'{m["org"]}/{m["repo"]}'.lower()
+        else:
+            raise RuntimeError(f'Unrecognized origin URL: {url}')
     token = args.token or env.get(args.token_env)
     username = args.username or env.get(args.username_env)
 
