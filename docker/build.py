@@ -113,7 +113,6 @@ def main(args=None):
                 '--enable-gnutls',
                 '--enable-libaom',
                 '--enable-libass',
-                '--enable-libfdk-aac',
                 '--enable-libfreetype',
                 '--enable-libmp3lame',
                 '--enable-libopus',
@@ -121,7 +120,6 @@ def main(args=None):
                 '--enable-libvpx',
                 '--enable-libx264',
                 '--enable-libx265',
-                '--enable-nonfree',
             ])
             make = f'PATH="$HOME/bin:$PATH" make -j {parallelism}'
 
